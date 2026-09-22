@@ -154,29 +154,36 @@ func TestAtomicWriteLimitedChild(t *testing.T) {
 }
 
 func TestJobFailuresKeepLastSuccessAndRecover(t *testing.T) {
-	root := t.TempDir()
-	labels := map[string]string{"task": "backup"}
-	for _, result := range []struct {
-		success   bool
-		now, last float64
-	}{
-		{true, 20, 20},
-		{false, 30, 20},
-		{true, 40, 40},
+	for name, labels := range map[string]map[string]string{
+		"labeled": {"task": "backup"},
+		"empty":   {},
+		"nil":     nil,
 	} {
-		if err := metrics.JobResult(root, "backup", labels, result.success, 100, result.now); err != nil {
-			t.Fatal(err)
-		}
+		t.Run(name, func(t *testing.T) {
+			root := t.TempDir()
+			for _, result := range []struct {
+				success   bool
+				now, last float64
+			}{
+				{true, 20, 20},
+				{false, 30, 20},
+				{true, 40, 40},
+			} {
+				if err := metrics.JobResult(root, "backup", labels, result.success, 100, result.now); err != nil {
+					t.Fatal(err)
+				}
 
-		body := read(t, jobPath(t, root, "backup"))
-		success := float64(0)
-		if result.success {
-			success = 1
-		}
+				body := read(t, jobPath(t, root, "backup"))
+				success := float64(0)
+				if result.success {
+					success = 1
+				}
 
-		expectSample(t, body, "infra_job_success", labels, success)
-		expectSample(t, body, "infra_job_last_success_timestamp_seconds", labels, result.last)
-		expectSample(t, body, "infra_job_last_run_timestamp_seconds", labels, result.now)
+				expectSample(t, body, "infra_job_success", labels, success)
+				expectSample(t, body, "infra_job_last_success_timestamp_seconds", labels, result.last)
+				expectSample(t, body, "infra_job_last_run_timestamp_seconds", labels, result.now)
+			}
+		})
 	}
 }
 

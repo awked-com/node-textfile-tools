@@ -62,8 +62,6 @@ func Sample(name string, value float64, labels map[string]string) (string, error
 	return name + suffix + " " + strconv.FormatFloat(value, 'g', -1, 64) + "\n", nil
 }
 
-func AtomicWrite(path, body string) error { return atomicWrite(path, []byte(body), 0644) }
-
 func JobPath(directory, key string) (string, error) {
 	if !jobKey.MatchString(key) {
 		return "", errors.New("unsafe job key")
@@ -114,7 +112,8 @@ func JobResult(directory, key string, labels map[string]string, success bool, ma
 	lastSuccess := float64(0)
 	if b, e := os.ReadFile(path); e == nil {
 		for _, line := range strings.Split(string(b), "\n") {
-			if !strings.HasPrefix(line, "infra_job_last_success_timestamp_seconds{") {
+			const metric = "infra_job_last_success_timestamp_seconds"
+			if !strings.HasPrefix(line, metric+"{") && !strings.HasPrefix(line, metric+" ") {
 				continue
 			}
 			parts := strings.Fields(line)

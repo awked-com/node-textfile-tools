@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 )
 
-// atomicWrite leaves the previous complete file in place if writing fails.
-func atomicWrite(path string, data []byte, mode os.FileMode) error {
+// AtomicWrite replaces a metric file with mode 0644, preserving the old file on failure.
+func AtomicWrite(path, body string) error {
 	f, err := os.CreateTemp(filepath.Dir(path), "."+filepath.Base(path))
 	if err != nil {
 		return err
@@ -14,10 +14,10 @@ func atomicWrite(path string, data []byte, mode os.FileMode) error {
 	defer os.Remove(f.Name())
 	defer f.Close()
 
-	if _, err = f.Write(data); err != nil {
+	if _, err = f.WriteString(body); err != nil {
 		return err
 	}
-	if err = f.Chmod(mode); err != nil {
+	if err = f.Chmod(0644); err != nil {
 		return err
 	}
 	if err = f.Sync(); err != nil {
