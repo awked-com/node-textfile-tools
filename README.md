@@ -2,8 +2,7 @@
 
 Prometheus node-exporter collectors for systemd jobs and workload counters,
 NixOS reboot status, SMART health, and received Btrfs backups. Both commands
-write `.prom` files atomically. The `infra_` metric prefix and `infra-job-`
-filenames are compatibility formats.
+write `.prom` files atomically.
 
 ## Build and test
 
